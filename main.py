@@ -21,7 +21,7 @@ models = model_loader.preload_models_from_standard_weights(model_file, device)
 
 
 ## TEXT TO IMAGE
-prompt = "A dog with sunglasses, full body, no hat, looking at camera, highly detailed, ultra sharp, cinematic, 100mm lens, 8k resolution."
+prompt = "A dog with sunglasses, full body, comfy hat, looking at camera, highly detailed, ultra sharp, cinematic, 100mm lens, 8k resolution."
 # prompt = "A cat stretching on the floor, highly detailed, ultra sharp, cinematic, 100mm lens, 8k resolution."
 uncond_prompt = ""  # Also known as negative prompt
 do_cfg = True
@@ -29,9 +29,9 @@ cfg_scale = 8  # min: 1, max: 14
 
 ## IMAGE TO IMAGE
 # input_image = None
-# Comment to disable image to image
 image_path = "images/dog.png"
 input_image = Image.open(image_path)
+
 # Higher values means more noise will be added to the input image, so the result will further from the input image.
 # Lower values means less noise is added to the input image, so output will be closer to the input image.
 strength = 0.9
