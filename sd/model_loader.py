@@ -1,13 +1,12 @@
-from sd.clip import CLIP
-from sd.encoder import VAE_Encoder
-from sd.decoder import VAE_Decoder
-from sd.diffusion import Diffusion
-
-import sd.model_converter as model_converter
+from .clip import CLIP
+from .encoder import VAE_Encoder
+from .decoder import VAE_Decoder
+from .diffusion import Diffusion
+from .model_converter import load_from_standard_weights
 
 
 def preload_models_from_standard_weights(ckpt_path, device):
-    state_dict = model_converter.load_from_standard_weights(ckpt_path, device)
+    state_dict = load_from_standard_weights(ckpt_path, device)
 
     encoder = VAE_Encoder().to(device)
     encoder.load_state_dict(state_dict["encoder"], strict=True)
