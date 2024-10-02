@@ -70,7 +70,7 @@ class BilingualDataset(Dataset):
             dim=0,
         )
 
-        # Double check the size of the tensors to make sure they are all seq_len long
+        # Double-check the size of the tensors to make sure they are all seq_len long
         assert encoder_input.size(0) == self.seq_len
         assert decoder_input.size(0) == self.seq_len
         assert label.size(0) == self.seq_len
