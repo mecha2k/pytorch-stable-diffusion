@@ -1,8 +1,0 @@
-## Python version: 3.11.3
-
-torch==2.0.1
-numpy==1.25.0
-tqdm==4.65.0
-transformers==4.38.0
-lightning==2.0.9
-pillow==10.3.0

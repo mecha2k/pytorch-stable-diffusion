@@ -67,7 +67,7 @@ def run_validation(model, validation_ds, tokenizer_src, tokenizer_tgt, max_len, 
         with os.popen('stty size', 'r') as console:
             _, console_width = console.read().split()
             console_width = int(console_width)
-    except:
+    except FileNotFoundError:
         # If we can't get the console width, use 80 as default
         console_width = 80
 
@@ -181,10 +181,10 @@ def train_model(config):
     # Define the device
     device = "cuda" if torch.cuda.is_available() else "mps" if torch.has_mps or torch.backends.mps.is_available() else "cpu"
     print("Using device:", device)
-    if (device == 'cuda'):
+    if device == 'cuda':
         print(f"Device name: {torch.cuda.get_device_name(device.index)}")
         print(f"Device memory: {torch.cuda.get_device_properties(device.index).total_memory / 1024 ** 3} GB")
-    elif (device == 'mps'):
+    elif device == 'mps':
         print(f"Device name: <mps>")
     else:
         print("NOTE: If you have a GPU, consider using it for training.")
