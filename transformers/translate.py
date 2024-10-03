@@ -11,7 +11,6 @@ import sys
 def translate(sentence: str):
     # Define the device, tokenizers, and model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print("Using device:", device)
     config = get_config()
     tokenizer_src = Tokenizer.from_file(
         str(Path(config["tokenizer_file"].format(config["lang_src"])))
@@ -29,7 +28,7 @@ def translate(sentence: str):
 
     # Load the pretrained weights
     model_filename = latest_weights_file_path(config)
-    state = torch.load(model_filename)
+    state = torch.load(model_filename, weights_only=True)
     model.load_state_dict(state["model_state_dict"])
 
     # if the sentence is a number use it as an index to the test set
@@ -136,4 +135,4 @@ def translate(sentence: str):
 
 
 # read sentence from argument
-translate(sys.argv[1] if len(sys.argv) > 1 else "I am not a very good a student.")
+# translate(sys.argv[1] if len(sys.argv) > 1 else "I am not a very good a student.")

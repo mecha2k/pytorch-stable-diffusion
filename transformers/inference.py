@@ -9,6 +9,7 @@ from translate import translate
 # Define the device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
+
 config = get_config()
 train_dataloader, val_dataloader, tokenizer_src, tokenizer_tgt = get_ds(config)
 model = get_model(
@@ -17,7 +18,7 @@ model = get_model(
 
 # Load the pretrained weights
 model_filename = latest_weights_file_path(config)
-state = torch.load(model_filename)
+state = torch.load(model_filename, weights_only=True)
 model.load_state_dict(state["model_state_dict"])
 
 
@@ -31,8 +32,8 @@ run_validation(
     lambda msg: print(msg),
     0,
     None,
-    num_examples=10,
+    num_examples=2,
 )
 
-print(translate("Why do I need to translate this?"))
-print(translate(34))
+# print(translate("Why do I need to translate this?"))
+# print(translate(34))
