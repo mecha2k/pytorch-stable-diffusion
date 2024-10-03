@@ -22,6 +22,8 @@ sdist/
 var/
 wheels/
 share/python-wheels/
+transformers/opus_books_weights
+transformers/runs
 *.egg-info/
 .installed.cfg
 *.egg

@@ -23,7 +23,9 @@ import torchmetrics
 from torch.utils.tensorboard import SummaryWriter
 
 
-def greedy_decode(model, source, source_mask, tokenizer_src, tokenizer_tgt, max_len, device):
+def greedy_decode(
+    model, source, source_mask, tokenizer_src, tokenizer_tgt, max_len, device
+):
     sos_idx = tokenizer_tgt.token_to_id("[SOS]")
     eos_idx = tokenizer_tgt.token_to_id("[EOS]")
 
@@ -36,7 +38,9 @@ def greedy_decode(model, source, source_mask, tokenizer_src, tokenizer_tgt, max_
             break
 
         # build mask for target
-        decoder_mask = causal_mask(decoder_input.size(1)).type_as(source_mask).to(device)
+        decoder_mask = (
+            causal_mask(decoder_input.size(1)).type_as(source_mask).to(device)
+        )
 
         # calculate output
         out = model.decode(encoder_output, source_mask, decoder_input, decoder_mask)
@@ -76,15 +80,7 @@ def run_validation(
     source_texts = []
     expected = []
     predicted = []
-
-    try:
-        # get the console window width
-        with os.popen("stty size", "r") as console:
-            _, console_width = console.read().split()
-            console_width = int(console_width)
-    except FileNotFoundError:
-        # If we can't get the console width, use 80 as default
-        console_width = 80
+    console_width = 80
 
     with torch.no_grad():
         for batch in validation_ds:
@@ -212,7 +208,9 @@ def get_ds(config):
     print(f"Max length of source sentence: {max_len_src}")
     print(f"Max length of target sentence: {max_len_tgt}")
 
-    train_dataloader = DataLoader(train_ds, batch_size=config["batch_size"], shuffle=True)
+    train_dataloader = DataLoader(
+        train_ds, batch_size=config["batch_size"], shuffle=True
+    )
     val_dataloader = DataLoader(val_ds, batch_size=1, shuffle=True)
 
     return train_dataloader, val_dataloader, tokenizer_src, tokenizer_tgt
@@ -255,12 +253,14 @@ def train_model(config):
     device = torch.device(device)
 
     # Make sure the weights folder exists
-    Path(f"{config['datasource']}_{config['model_folder']}").mkdir(parents=True, exist_ok=True)
+    Path(f"{config['datasource']}_{config['model_folder']}").mkdir(
+        parents=True, exist_ok=True
+    )
 
     train_dataloader, val_dataloader, tokenizer_src, tokenizer_tgt = get_ds(config)
-    model = get_model(config, tokenizer_src.get_vocab_size(), tokenizer_tgt.get_vocab_size()).to(
-        device
-    )
+    model = get_model(
+        config, tokenizer_src.get_vocab_size(), tokenizer_tgt.get_vocab_size()
+    ).to(device)
     # Tensorboard
     writer = SummaryWriter(config["experiment_name"])
 
@@ -301,7 +301,9 @@ def train_model(config):
             decoder_mask = batch["decoder_mask"].to(device)  # (B, 1, seq_len, seq_len)
 
             # Run the tensors through the encoder, decoder and the projection layer
-            encoder_output = model.encode(encoder_input, encoder_mask)  # (B, seq_len, d_model)
+            encoder_output = model.encode(
+                encoder_input, encoder_mask
+            )  # (B, seq_len, d_model)
             decoder_output = model.decode(
                 encoder_output, encoder_mask, decoder_input, decoder_mask
             )  # (B, seq_len, d_model)
@@ -311,7 +313,9 @@ def train_model(config):
             label = batch["label"].to(device)  # (B, seq_len)
 
             # Compute the loss using a simple cross entropy
-            loss = loss_fn(proj_output.view(-1, tokenizer_tgt.get_vocab_size()), label.view(-1))
+            loss = loss_fn(
+                proj_output.view(-1, tokenizer_tgt.get_vocab_size()), label.view(-1)
+            )
             batch_iterator.set_postfix({"loss": f"{loss.item():6.3f}"})
 
             # Log the loss
