@@ -6,6 +6,7 @@ from modules import *
 
 
 class DiffusionModel(pl.LightningModule):
+
     def __init__(self, in_size, t_range, img_depth):
         super().__init__()
         self.beta_small = 1e-4
@@ -13,7 +14,7 @@ class DiffusionModel(pl.LightningModule):
         self.t_range = t_range
         self.in_size = in_size
 
-        self.unet = Unet(dim = 64, dim_mults = (1, 2, 4, 8), channels=img_depth)
+        self.unet = Unet(dim=64, dim_mults=(1, 2, 4, 8), channels=img_depth)
 
     def forward(self, x, t):
         return self.unet(x, t)
@@ -40,9 +41,7 @@ class DiffusionModel(pl.LightningModule):
         epsilons = torch.randn(batch.shape, device=self.device)
         for i in range(len(ts)):
             a_hat = self.alpha_bar(ts[i])
-            noise_imgs.append(
-                (math.sqrt(a_hat) * batch[i]) + (math.sqrt(1 - a_hat) * epsilons[i])
-            )
+            noise_imgs.append((math.sqrt(a_hat) * batch[i]) + (math.sqrt(1 - a_hat) * epsilons[i]))
         noise_imgs = torch.stack(noise_imgs, dim=0)
         # Run the noisy images through the U-Net, to get the predicted noise
         e_hat = self.forward(noise_imgs, ts)

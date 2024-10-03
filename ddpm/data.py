@@ -5,8 +5,8 @@ from torchvision import transforms
 
 
 class DiffSet(Dataset):
-    def __init__(self, train, dataset_name):
 
+    def __init__(self, train, dataset_name):
         ds_mapping = {
             "MNIST": (MNIST, 32, 1),
             "FashionMNIST": (FashionMNIST, 32, 1),
@@ -30,9 +30,9 @@ class DiffSet(Dataset):
 
         if self.dataset_name == "MNIST" or self.dataset_name == "FashionMNIST":
             pad = transforms.Pad(2)
-            data = pad(ds_item) # Pad to make it 32x32
+            data = pad(ds_item)  # Pad to make it 32x32
         else:
             data = ds_item
-        
-        data = (data * 2.0) - 1.0 # normalize to [-1, 1].
+
+        data = (data * 2.0) - 1.0  # normalize to [-1, 1].
         return data

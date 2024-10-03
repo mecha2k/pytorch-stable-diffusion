@@ -1,19 +1,23 @@
 import torch
-from data import DiffSet
+import numpy as np
 import pytorch_lightning as pl
-from model import DiffusionModel
-from torch.utils.data import DataLoader
 import imageio
 import glob
+import os
+
+from data import DiffSet
+from model import DiffusionModel
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 from PIL import Image, ImageDraw, ImageFont
-import numpy as np
-import os
+
 
 def sample_gif(model, train_dataset, output_dir) -> None:
     gif_shape = [3, 3]  # The gif will be a grid of images of this shape
     sample_batch_size = gif_shape[0] * gif_shape[1]
-    n_hold_final = 100  # How many samples to append to the end of the GIF to hold the final image fixed
+    n_hold_final = (
+        100  # How many samples to append to the end of the GIF to hold the final image fixed
+    )
 
     # Generate samples from denoising process
     gen_samples = []
@@ -61,9 +65,7 @@ def sample_gif(model, train_dataset, output_dir) -> None:
         return black_image
 
     for i in range(gen_samples.shape[0]):
-        gen_samples[i, 0, 0] = add_text_to_image(
-            gen_samples[i, 0, 0], f"{sampled_steps[i]}"
-        )
+        gen_samples[i, 0, 0] = add_text_to_image(gen_samples[i, 0, 0], f"{sampled_steps[i]}")
 
     def stack_samples(gen_samples, stack_dim):
         gen_samples = list(torch.split(gen_samples, 1, dim=1))
@@ -77,16 +79,15 @@ def sample_gif(model, train_dataset, output_dir) -> None:
     output_file = f"{output_dir}/pred.gif"
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    imageio.mimsave(
-        output_file, list(gen_samples.squeeze(-1)), format="GIF", duration=20
-    )
+    imageio.mimsave(output_file, list(gen_samples.squeeze(-1)), format="GIF", duration=20)
+
 
 def train_model(config: dict) -> None:
     # Code for optionally loading model
     pass_version = None
     last_checkpoint = None
 
-    if config['load_model']:
+    if config["load_model"]:
         pass_version = config["load_version_num"]
         last_checkpoint = glob.glob(
             f"./lightning_logs/{config['dataset']}/version_{config['load_version_num']}/checkpoints/*.ckpt"
@@ -104,7 +105,7 @@ def train_model(config: dict) -> None:
     )
 
     # Create model and trainer
-    if config['load_model']:
+    if config["load_model"]:
         model = DiffusionModel.load_from_checkpoint(
             last_checkpoint,
             in_size=train_dataset.size * train_dataset.size,
@@ -132,6 +133,7 @@ def train_model(config: dict) -> None:
 
     return model, train_dataset, trainer.logger.log_dir
 
+
 def get_config() -> dict:
     return {
         "diffusion_steps": 1000,
@@ -142,7 +144,8 @@ def get_config() -> dict:
         "load_version_num": 1,
     }
 
-if __name__ == "__main__":   
+
+if __name__ == "__main__":
     config = get_config()
     model, train_ds, output_dir = train_model(config)
     sample_gif(model, train_ds, output_dir)
