@@ -5,6 +5,7 @@ import imageio
 import glob
 import os
 
+from examples.dataset.write_dataset_encrypted import dataset
 from torch.utils.data import DataLoader
 from PIL import Image, ImageDraw, ImageFont
 from tqdm import tqdm
@@ -90,12 +91,12 @@ def train_model(config: dict):
     if config["load_model"]:
         pass_version = config["load_version_num"]
         last_checkpoint = glob.glob(
-            f"./lightning_logs/{config['dataset']}/version_{config['load_version_num']}/checkpoints/*.ckpt"
+            f"../data/lightning_logs/{config['dataset']}/version_{config['load_version_num']}/checkpoints/*.ckpt"
         )[-1]
 
     # Create datasets and data loaders
-    train_dataset = DiffSet(True, config["dataset"])
-    val_dataset = DiffSet(False, config["dataset"])
+    train_dataset = DiffSet(train=True, dataset_name=config["dataset"])
+    val_dataset = DiffSet(train=False, dataset_name=config["dataset"])
 
     train_loader = DataLoader(
         train_dataset,

@@ -27,13 +27,11 @@ def cast_tuple(t, length=1):
     return (t,) * length
 
 
-def identity(t, *args, **kwargs):
+def identity(t):
     return t
 
 
 # small helper modules
-
-
 def Upsample(dim, dim_out=None):
     return nn.Sequential(
         nn.Upsample(scale_factor=2, mode="nearest"),
@@ -143,7 +141,7 @@ class Attend(nn.Module):
         n, i, j - sequence length (base sequence length, source, target)
         d - feature dimension
         """
-        q_len, k_len, device = q.shape[-2], k.shape[-2], q.device
+        # q_len, k_len, device = q.shape[-2], k.shape[-2], q.device
         scale = q.shape[-1] ** -0.5
         # similarity
         sim = einsum(f"b h i d, b h j d -> b h i j", q, k) * scale
@@ -224,7 +222,7 @@ class Unet(nn.Module):
         self.ups = nn.ModuleList([])
         num_resolutions = len(in_out)  # Number of layers (up and downs) in the UNet
 
-        for ind, ((dim_in, dim_out)) in enumerate(in_out):
+        for ind, (dim_in, dim_out) in enumerate(in_out):
             is_last = ind >= (num_resolutions - 1)
 
             self.downs.append(
@@ -247,7 +245,7 @@ class Unet(nn.Module):
         self.mid_attn = Attention(mid_dim)
         self.mid_block2 = block_klass(mid_dim, mid_dim, time_emb_dim=time_dim)
 
-        for ind, ((dim_in, dim_out)) in enumerate(reversed(in_out)):
+        for ind, (dim_in, dim_out) in enumerate(reversed(in_out)):
             is_last = ind == (len(in_out) - 1)
 
             self.ups.append(
