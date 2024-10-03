@@ -30,7 +30,7 @@ class DiffusionModel(pl.LightningModule):
         # Product of alphas from 0 to t
         return math.prod([self.alpha(j) for j in range(t)])
 
-    def get_loss(self, batch, batch_idx):
+    def get_loss(self, batch):
         """
         Corresponds to Algorithm 1 from (Ho et al., 2020).
         """
@@ -70,12 +70,12 @@ class DiffusionModel(pl.LightningModule):
             return x
 
     def training_step(self, batch, batch_idx):
-        loss = self.get_loss(batch, batch_idx)
+        loss = self.get_loss(batch)
         self.log("train/loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        loss = self.get_loss(batch, batch_idx)
+        loss = self.get_loss(batch)
         self.log("val/loss", loss)
         return
 

@@ -5,7 +5,6 @@ import imageio
 import glob
 import os
 
-from examples.dataset.write_dataset_encrypted import dataset
 from torch.utils.data import DataLoader
 from PIL import Image, ImageDraw, ImageFont
 from tqdm import tqdm
@@ -96,7 +95,7 @@ def train_model(config: dict):
 
     # Create datasets and data loaders
     train_dataset = DiffSet(train=True, dataset_name=config["dataset"])
-    val_dataset = DiffSet(train=False, dataset_name=config["dataset"])
+    valid_dataset = DiffSet(train=False, dataset_name=config["dataset"])
 
     train_loader = DataLoader(
         train_dataset,
@@ -105,8 +104,8 @@ def train_model(config: dict):
         shuffle=True,
         persistent_workers=True,
     )
-    val_loader = DataLoader(
-        val_dataset,
+    valid_loader = DataLoader(
+        valid_dataset,
         batch_size=config["batch_size"],
         num_workers=4,
         shuffle=False,
@@ -138,7 +137,7 @@ def train_model(config: dict):
     trainer = pl.Trainer(max_epochs=config["max_epoch"], log_every_n_steps=10, logger=tb_logger)
 
     # Train model
-    trainer.fit(model, train_loader, val_loader)
+    trainer.fit(model, train_loader, valid_loader)
 
     return model, train_dataset, trainer.logger.log_dir
 
