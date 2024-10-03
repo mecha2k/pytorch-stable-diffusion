@@ -15,7 +15,7 @@ class DiffSet(Dataset):
 
         t = transforms.Compose([transforms.ToTensor()])
         ds, img_size, channels = ds_mapping[dataset_name]
-        ds = ds("./data", download=True, train=train, transform=t)
+        ds = ds("../data", download=True, train=train, transform=t)
 
         self.ds = ds
         self.dataset_name = dataset_name

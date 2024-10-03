@@ -5,11 +5,11 @@ import imageio
 import glob
 import os
 
+from torch.utils.data import DataLoader
+from PIL import Image, ImageDraw, ImageFont
+from tqdm import tqdm
 from data import DiffSet
 from model import DiffusionModel
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-from PIL import Image, ImageDraw, ImageFont
 
 
 def sample_gif(model, train_dataset, output_dir) -> None:
@@ -82,7 +82,7 @@ def sample_gif(model, train_dataset, output_dir) -> None:
     imageio.mimsave(output_file, list(gen_samples.squeeze(-1)), format="GIF", duration=20)
 
 
-def train_model(config: dict) -> None:
+def train_model(config: dict):
     # Code for optionally loading model
     pass_version = None
     last_checkpoint = None
@@ -98,10 +98,18 @@ def train_model(config: dict) -> None:
     val_dataset = DiffSet(False, config["dataset"])
 
     train_loader = DataLoader(
-        train_dataset, batch_size=config["batch_size"], num_workers=4, shuffle=True
+        train_dataset,
+        batch_size=config["batch_size"],
+        num_workers=4,
+        shuffle=True,
+        persistent_workers=True,
     )
     val_loader = DataLoader(
-        val_dataset, batch_size=config["batch_size"], num_workers=4, shuffle=True
+        val_dataset,
+        batch_size=config["batch_size"],
+        num_workers=4,
+        shuffle=False,
+        persistent_workers=True,
     )
 
     # Create model and trainer
@@ -121,7 +129,7 @@ def train_model(config: dict) -> None:
 
     # Load Trainer model
     tb_logger = pl.loggers.TensorBoardLogger(
-        "lightning_logs/",
+        "../data/lightning_logs/",
         name=config["dataset"],
         version=pass_version,
     )
@@ -138,7 +146,7 @@ def get_config() -> dict:
     return {
         "diffusion_steps": 1000,
         "dataset": "CIFAR10",
-        "max_epoch": 10,
+        "max_epoch": 1,
         "batch_size": 32,
         "load_model": False,
         "load_version_num": 1,

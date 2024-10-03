@@ -13,6 +13,7 @@ noise_levels = [0, 10, 50, 75, 100, 250, 500, 750, 1000]
 img = Image.open("Umar.png", formats=["png"])
 img_tensor = torch.tensor(np.array(img))
 img_tensor = ((img_tensor / 255.0) * 2.0) - 1.0
+
 # Create a batch by repeating the same image many times
 batch = img_tensor.repeat(len(noise_levels), 1, 1, 1)
 
