@@ -1,5 +1,5 @@
 dataset_params:
-  im_path: 'data/train/images'
+  im_path: '../data/ddpm/images'
 
 diffusion_params:
   num_timesteps : 1000
@@ -20,8 +20,8 @@ model_params:
 
 train_params:
   task_name: 'default'
-  batch_size: 64
-  num_epochs: 40
+  batch_size: 256
+  num_epochs: 10
   num_samples : 100
   num_grid_rows : 10
   lr: 0.0001
