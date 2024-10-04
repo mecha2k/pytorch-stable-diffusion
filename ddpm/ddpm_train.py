@@ -134,7 +134,7 @@ def train_model(config: dict):
         version=pass_version,
     )
 
-    trainer = pl.Trainer(max_epochs=config["max_epoch"], log_every_n_steps=10, logger=tb_logger)
+    trainer = pl.Trainer(max_epochs=config["max_epoch"], log_every_n_steps=1, logger=tb_logger)
 
     # Train model
     trainer.fit(model, train_loader, valid_loader)
@@ -148,8 +148,8 @@ def get_config() -> dict:
         "dataset": "CIFAR10",
         "max_epoch": 1,
         "batch_size": 32,
-        "load_model": False,
-        "load_version_num": 1,
+        "load_model": True,
+        "load_version_num": 5,
     }
 
 
