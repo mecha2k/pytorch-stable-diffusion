@@ -18,9 +18,7 @@ ddpm_dir = Path("../data/ddpm/")
 
 
 device = (
-    "cuda"
-    if torch.cuda.is_available()
-    else "mps" if torch.backends.mps.is_available() else "cpu"
+    "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 )
 print("Using device:", device)
 
@@ -103,9 +101,7 @@ class DownBlock(nn.Module):
                 nn.Sequential(
                     nn.GroupNorm(8, out_channels),
                     nn.SiLU(),
-                    nn.Conv2d(
-                        out_channels, out_channels, kernel_size=3, stride=1, padding=1
-                    ),
+                    nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1),
                 )
                 for _ in range(num_layers)
             ]
@@ -122,16 +118,12 @@ class DownBlock(nn.Module):
         )
         self.residual_input_conv = nn.ModuleList(
             [
-                nn.Conv2d(
-                    in_channels if i == 0 else out_channels, out_channels, kernel_size=1
-                )
+                nn.Conv2d(in_channels if i == 0 else out_channels, out_channels, kernel_size=1)
                 for i in range(num_layers)
             ]
         )
         self.down_sample_conv = (
-            nn.Conv2d(out_channels, out_channels, 4, 2, 1)
-            if self.down_sample
-            else nn.Identity()
+            nn.Conv2d(out_channels, out_channels, 4, 2, 1) if self.down_sample else nn.Identity()
         )
 
     def forward(self, x, t_emb):
@@ -197,9 +189,7 @@ class MidBlock(nn.Module):
                 nn.Sequential(
                     nn.GroupNorm(8, out_channels),
                     nn.SiLU(),
-                    nn.Conv2d(
-                        out_channels, out_channels, kernel_size=3, stride=1, padding=1
-                    ),
+                    nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1),
                 )
                 for _ in range(num_layers + 1)
             ]
@@ -217,9 +207,7 @@ class MidBlock(nn.Module):
         )
         self.residual_input_conv = nn.ModuleList(
             [
-                nn.Conv2d(
-                    in_channels if i == 0 else out_channels, out_channels, kernel_size=1
-                )
+                nn.Conv2d(in_channels if i == 0 else out_channels, out_channels, kernel_size=1)
                 for i in range(num_layers + 1)
             ]
         )
@@ -304,9 +292,7 @@ class UpBlock(nn.Module):
                 nn.Sequential(
                     nn.GroupNorm(8, out_channels),
                     nn.SiLU(),
-                    nn.Conv2d(
-                        out_channels, out_channels, kernel_size=3, stride=1, padding=1
-                    ),
+                    nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1),
                 )
                 for _ in range(num_layers)
             ]
@@ -324,9 +310,7 @@ class UpBlock(nn.Module):
         )
         self.residual_input_conv = nn.ModuleList(
             [
-                nn.Conv2d(
-                    in_channels if i == 0 else out_channels, out_channels, kernel_size=1
-                )
+                nn.Conv2d(in_channels if i == 0 else out_channels, out_channels, kernel_size=1)
                 for i in range(num_layers)
             ]
         )
@@ -388,9 +372,7 @@ class Unet(nn.Module):
         )
 
         self.up_sample = list(reversed(self.down_sample))
-        self.conv_in = nn.Conv2d(
-            im_channels, self.down_channels[0], kernel_size=3, padding=(1, 1)
-        )
+        self.conv_in = nn.Conv2d(im_channels, self.down_channels[0], kernel_size=3, padding=(1, 1))
 
         self.downs = nn.ModuleList([])
         for i in range(len(self.down_channels) - 1):
@@ -492,12 +474,10 @@ class LinearNoiseScheduler:
         original_shape = original.shape
         batch_size = original_shape[0]
 
-        sqrt_alpha_cum_prod = self.sqrt_alpha_cum_prod.to(original.device)[t].reshape(
-            batch_size
-        )
-        sqrt_one_minus_alpha_cum_prod = self.sqrt_one_minus_alpha_cum_prod.to(
-            original.device
-        )[t].reshape(batch_size)
+        sqrt_alpha_cum_prod = self.sqrt_alpha_cum_prod.to(original.device)[t].reshape(batch_size)
+        sqrt_one_minus_alpha_cum_prod = self.sqrt_one_minus_alpha_cum_prod.to(original.device)[
+            t
+        ].reshape(batch_size)
 
         # Reshape till (B), becomes (B,1,1,1) if image is (B,C,H,W)
         for _ in range(len(original_shape) - 1):
@@ -520,9 +500,9 @@ class LinearNoiseScheduler:
         :param t: current timestep we are at
         :return:
         """
-        x0 = (
-            xt - (self.sqrt_one_minus_alpha_cum_prod.to(xt.device)[t] * noise_pred)
-        ) / torch.sqrt(self.alpha_cum_prod.to(xt.device)[t])
+        x0 = (xt - (self.sqrt_one_minus_alpha_cum_prod.to(xt.device)[t] * noise_pred)) / torch.sqrt(
+            self.alpha_cum_prod.to(xt.device)[t]
+        )
         x0 = torch.clamp(x0, -1.0, 1.0)
 
         mean = xt - ((self.betas.to(xt.device)[t]) * noise_pred) / (
@@ -569,9 +549,7 @@ def sample(model, scheduler, train_config, model_config, diffusion_config):
         noise_pred = model(xt, torch.as_tensor(i).unsqueeze(0).to(device))
 
         # Use scheduler to get x0 and xt-1
-        xt, x0_pred = scheduler.sample_prev_timestep(
-            xt, noise_pred, torch.as_tensor(i).to(device)
-        )
+        xt, x0_pred = scheduler.sample_prev_timestep(xt, noise_pred, torch.as_tensor(i).to(device))
 
         if i % 100 == 0 or i == diffusion_config["num_timesteps"] - 1:
             ims = torch.clamp(xt, -1.0, 1.0).detach().cpu()
@@ -597,9 +575,7 @@ def infer(args):
     # Load model with checkpoint
     model_name = ddpm_dir / train_config["task_name"] / train_config["ckpt_name"]
     model = Unet(model_config).to(device)
-    model.load_state_dict(
-        torch.load(model_name, map_location=device, weights_only=True)
-    )
+    model.load_state_dict(torch.load(model_name, map_location=device, weights_only=True))
     model.eval()
 
     # Create the noise scheduler
@@ -648,9 +624,7 @@ def train(args):
     # )
     transform = transforms.Compose([transforms.ToTensor(), lambda x: 2 * x - 1])
 
-    mnist_dataset = datasets.MNIST(
-        ddpm_dir, train=True, download=True, transform=transform
-    )
+    mnist_dataset = datasets.MNIST(ddpm_dir, train=True, download=True, transform=transform)
     mnist_loader = torch.utils.data.DataLoader(mnist_dataset, **kwargs)
 
     # Instantiate the model
@@ -666,9 +640,7 @@ def train(args):
     model_name = output_dir / train_config["ckpt_name"]
     if model_name.exists():
         print("Loading checkpoint as found one")
-        model.load_state_dict(
-            torch.load(model_name, map_location=device, weights_only=True)
-        )
+        model.load_state_dict(torch.load(model_name, map_location=device, weights_only=True))
 
     # Specify training parameters
     num_epochs = train_config["num_epochs"]
@@ -686,9 +658,7 @@ def train(args):
             noise = torch.randn_like(im).to(device)
 
             # Sample timestep
-            t = torch.randint(0, diffusion_config["num_timesteps"], (im.shape[0],)).to(
-                device
-            )
+            t = torch.randint(0, diffusion_config["num_timesteps"], (im.shape[0],)).to(device)
 
             # Add noise to images according to timestep
             noisy_im = scheduler.add_noise(im, noise, t)
@@ -712,9 +682,7 @@ def train(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Arguments for ddpm image generation")
-    parser.add_argument(
-        "--config", dest="config_path", default="default.yaml", type=str
-    )
+    parser.add_argument("--config", dest="config_path", default="default.yaml", type=str)
     args = parser.parse_args()
     # train(args)
     infer(args)
