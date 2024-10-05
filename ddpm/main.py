@@ -25,110 +25,6 @@ device = (
 print("Using device:", device)
 
 
-def train(args):
-    # Read the config file #
-    with open(args.config_path, "r") as file:
-        try:
-            config = yaml.safe_load(file)
-        except yaml.YAMLError as exc:
-            print(exc)
-    print(config)
-    ########################
-
-    diffusion_config = config["diffusion_params"]
-    # dataset_config = config["dataset_params"]
-    model_config = config["model_params"]
-    train_config = config["train_params"]
-
-    # Create the noise scheduler
-    scheduler = LinearNoiseScheduler(
-        num_timesteps=diffusion_config["num_timesteps"],
-        beta_start=diffusion_config["beta_start"],
-        beta_end=diffusion_config["beta_end"],
-    )
-
-    # Create the dataset
-    kwargs = {
-        "batch_size": train_config["batch_size"],
-        "num_workers": 0,
-        "pin_memory": True,
-        "shuffle": True,
-    }
-    if device == "cuda":
-        cuda_kwargs = {"num_workers": 4, "pin_memory": True}
-        kwargs.update(cuda_kwargs)
-    transform = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize(mean=[0.5], std=[0.5])]
-    )
-    # transform = transforms.Compose(
-    #     [transforms.ToTensor(), lambda x: 2 * x - 1]
-    # )
-
-    mnist_dataset = datasets.MNIST(
-        ddpm_dir, train=True, download=True, transform=transform
-    )
-    mnist_loader = torch.utils.data.DataLoader(mnist_dataset, **kwargs)
-
-    # Instantiate the model
-    model = Unet(model_config).to(device)
-    model.train()
-
-    # Create output directories
-    output_dir = ddpm_dir / train_config["task_name"]
-    if not output_dir.exists():
-        output_dir.mkdir()
-
-    # Load checkpoint if found
-    model_name = output_dir / train_config["ckpt_name"]
-    if model_name.exists():
-        print("Loading checkpoint as found one")
-        model.load_state_dict(
-            torch.load(
-                model_name,
-                map_location=device,
-            )
-        )
-
-    # Specify training parameters
-    num_epochs = train_config["num_epochs"]
-    optimizer = Adam(model.parameters(), lr=train_config["lr"])
-    criterion = torch.nn.MSELoss()
-
-    # Run training
-    for epoch_idx in range(num_epochs):
-        losses = []
-        for images, _ in tqdm(mnist_loader):
-            optimizer.zero_grad()
-            im = images.float().to(device)
-
-            # Sample random noise
-            noise = torch.randn_like(im).to(device)
-
-            # Sample timestep
-            t = torch.randint(0, diffusion_config["num_timesteps"], (im.shape[0],)).to(
-                device
-            )
-
-            # Add noise to images according to timestep
-            noisy_im = scheduler.add_noise(im, noise, t)
-            noise_pred = model(noisy_im, t)
-
-            loss = criterion(noise_pred, noise)
-            losses.append(loss.item())
-            loss.backward()
-            optimizer.step()
-        print(
-            "Finished epoch:{} | Loss : {:.4f}".format(
-                epoch_idx + 1,
-                np.mean(losses),
-            )
-        )
-        torch.save(model.state_dict(), output_dir / f"ddpm_{epoch_idx:02d}.ckpt")
-
-    torch.save(model.state_dict(), model_name)
-    print("Done Training ...")
-
-
 def get_time_embedding(time_steps, temb_dim):
     r"""
     Convert time steps tensor into an embedding using the
@@ -677,13 +573,13 @@ def sample(model, scheduler, train_config, model_config, diffusion_config):
             xt, noise_pred, torch.as_tensor(i).to(device)
         )
 
-        # Save x0
-        ims = torch.clamp(xt, -1.0, 1.0).detach().cpu()
-        ims = (ims + 1) / 2
-        grid = make_grid(ims, nrow=train_config["num_grid_rows"])
-        img = torchvision.transforms.ToPILImage()(grid)
-        img.save(img_dir / f"x0_{i:02d}.png")
-        img.close()
+        if i % 100 == 0 or i == diffusion_config["num_timesteps"] - 1:
+            ims = torch.clamp(xt, -1.0, 1.0).detach().cpu()
+            ims = (ims + 1) / 2
+            grid = make_grid(ims, nrow=train_config["num_grid_rows"])
+            img = torchvision.transforms.ToPILImage()(grid)
+            img.save(img_dir / f"x0_{i:03d}.png")
+            img.close()
 
 
 def infer(args):
@@ -714,6 +610,104 @@ def infer(args):
     )
     with torch.no_grad():
         sample(model, scheduler, train_config, model_config, diffusion_config)
+
+
+def train(args):
+    # Read the config file #
+    with open(args.config_path, "r") as file:
+        try:
+            config = yaml.safe_load(file)
+        except yaml.YAMLError as exc:
+            print(exc)
+    print(config)
+    ########################
+
+    diffusion_config = config["diffusion_params"]
+    # dataset_config = config["dataset_params"]
+    model_config = config["model_params"]
+    train_config = config["train_params"]
+
+    # Create the noise scheduler
+    scheduler = LinearNoiseScheduler(
+        num_timesteps=diffusion_config["num_timesteps"],
+        beta_start=diffusion_config["beta_start"],
+        beta_end=diffusion_config["beta_end"],
+    )
+
+    # Create the dataset
+    kwargs = {
+        "batch_size": train_config["batch_size"],
+        "num_workers": 0,
+        "pin_memory": False,
+        "shuffle": True,
+    }
+    if device == "cuda":
+        kwargs.update({"pin_memory": True})
+    # transform = transforms.Compose(
+    #     [transforms.ToTensor(), transforms.Normalize(mean=[0.5], std=[0.5])]
+    # )
+    transform = transforms.Compose([transforms.ToTensor(), lambda x: 2 * x - 1])
+
+    mnist_dataset = datasets.MNIST(
+        ddpm_dir, train=True, download=True, transform=transform
+    )
+    mnist_loader = torch.utils.data.DataLoader(mnist_dataset, **kwargs)
+
+    # Instantiate the model
+    model = Unet(model_config).to(device)
+    model.train()
+
+    # Create output directories
+    output_dir = ddpm_dir / train_config["task_name"]
+    if not output_dir.exists():
+        output_dir.mkdir()
+
+    # Load checkpoint if found
+    model_name = output_dir / train_config["ckpt_name"]
+    if model_name.exists():
+        print("Loading checkpoint as found one")
+        model.load_state_dict(
+            torch.load(model_name, map_location=device, weights_only=True)
+        )
+
+    # Specify training parameters
+    num_epochs = train_config["num_epochs"]
+    optimizer = Adam(model.parameters(), lr=train_config["lr"])
+    criterion = torch.nn.MSELoss()
+
+    # Run training
+    for epoch_idx in range(num_epochs):
+        losses = []
+        for images, _ in tqdm(mnist_loader):
+            optimizer.zero_grad()
+            im = images.float().to(device)
+
+            # Sample random noise
+            noise = torch.randn_like(im).to(device)
+
+            # Sample timestep
+            t = torch.randint(0, diffusion_config["num_timesteps"], (im.shape[0],)).to(
+                device
+            )
+
+            # Add noise to images according to timestep
+            noisy_im = scheduler.add_noise(im, noise, t)
+            noise_pred = model(noisy_im, t)
+
+            loss = criterion(noise_pred, noise)
+            losses.append(loss.item())
+            loss.backward()
+            optimizer.step()
+        print(
+            "Finished epoch:{} | Loss : {:.4f}".format(
+                epoch_idx + 1,
+                np.mean(losses),
+            )
+        )
+        torch.save(model.state_dict(), output_dir / f"ddpm_{epoch_idx:02d}.ckpt")
+
+    torch.save(model.state_dict(), model_name)
+    print("Done Training ...")
 
 
 if __name__ == "__main__":
