@@ -57,11 +57,12 @@ class VAE_Encoder(nn.Sequential):
         # noise: (Batch_Size, 4, Height / 8, Width / 8)
 
         for module in self:
+            print(module)
 
-            if getattr(module, "stride", None) == (
-                2,
-                2,
-            ):  # Padding at downsampling should be asymmetric (see #8)
+        for module in self:
+
+            if getattr(module, "stride", None) == (2, 2):
+                # Padding at downsampling should be asymmetric (see #8)
                 # Pad: (Padding_Left, Padding_Right, Padding_Top, Padding_Bottom).
                 # Pad with zeros on the right and bottom.
                 # (Batch_Size, Channel, Height, Width) -> (Batch_Size, Channel, Height + Padding_Top + Padding_Bottom, Width + Padding_Left + Padding_Right) = (Batch_Size, Channel, Height + 1, Width + 1)
