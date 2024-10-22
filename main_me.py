@@ -10,6 +10,8 @@ print(f"{device} is available in torch and cuda version : {torch.version.cuda}")
 
 if __name__ == "__main__":
     inputs = torch.randn(64, 3, 32, 32).to(device)
+    ns = inputs.shape
+    noise_shape = (ns[0], 4, ns[2] / 8, ns[3] / 8)
     noise = torch.randn(1).to(device)
     model = encoder.VAE_Encoder().to(device)
     outputs = model(inputs, noise)
