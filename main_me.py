@@ -1,11 +1,70 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import math
 
 from sd import encoder
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("mps" if torch.backends.mps.is_available() else device)
 print(f"{device} is available in torch and cuda version : {torch.version.cuda}")
+
+
+def self_attention(x, n_heads, in_proj_bias=True, out_proj_bias=True, causal_mask=False):
+    # x: # (Batch_Size, Seq_Len, Dim)
+    # (Batch_Size, Seq_Len, Dim)
+    input_shape = x.shape
+
+    # (Batch_Size, Seq_Len, Dim)
+    batch_size, sequence_length, d_embed = input_shape
+
+    # This combines the Wq, Wk and Wv matrices into one matrix
+    in_proj = nn.Linear(d_embed, 3 * d_embed, bias=in_proj_bias)
+    # This one represents the Wo matrix
+    out_proj = nn.Linear(d_embed, d_embed, bias=out_proj_bias)
+    d_head = d_embed // n_heads
+
+    # (Batch_Size, Seq_Len, H, Dim / H)
+    interim_shape = (batch_size, sequence_length, n_heads, d_head)
+
+    # (Batch_Size, Seq_Len, Dim) -> (Batch_Size, Seq_Len, Dim * 3) -> 3 tensor of shape (Batch_Size, Seq_Len, Dim)
+    q, k, v = in_proj(x).chunk(3, dim=-1)
+
+    # (Batch_Size, Seq_Len, Dim) -> (Batch_Size, Seq_Len, H, Dim / H) -> (Batch_Size, H, Seq_Len, Dim / H)
+    q = q.view(interim_shape).transpose(1, 2)
+    k = k.view(interim_shape).transpose(1, 2)
+    v = v.view(interim_shape).transpose(1, 2)
+
+    # (Batch_Size, H, Seq_Len, Dim / H) @ (Batch_Size, H, Dim / H, Seq_Len) -> (Batch_Size, H, Seq_Len, Seq_Len)
+    weight = q @ k.transpose(-1, -2)
+
+    if causal_mask:
+        # Mask where the upper triangle (above the principal diagonal) is 1
+        mask = torch.ones_like(weight, dtype=torch.bool).triu(1)
+        # Fill the upper triangle with -inf
+        weight.masked_fill_(mask, -torch.inf)
+
+        # Divide by d_k (Dim / H).
+    # (Batch_Size, H, Seq_Len, Seq_Len) -> (Batch_Size, H, Seq_Len, Seq_Len)
+    weight /= math.sqrt(d_head)
+
+    # (Batch_Size, H, Seq_Len, Seq_Len) -> (Batch_Size, H, Seq_Len, Seq_Len)
+    weight = F.softmax(weight, dim=-1)
+
+    # (Batch_Size, H, Seq_Len, Seq_Len) @ (Batch_Size, H, Seq_Len, Dim / H) -> (Batch_Size, H, Seq_Len, Dim / H)
+    output = weight @ v
+
+    # (Batch_Size, H, Seq_Len, Dim / H) -> (Batch_Size, Seq_Len, H, Dim / H)
+    output = output.transpose(1, 2)
+
+    # (Batch_Size, Seq_Len, H, Dim / H) -> (Batch_Size, Seq_Len, Dim)
+    output = output.reshape(input_shape)
+
+    # (Batch_Size, Seq_Len, Dim) -> (Batch_Size, Seq_Len, Dim)
+    output = out_proj(output)
+
+    # (Batch_Size, Seq_Len, Dim)
+    return output
 
 
 if __name__ == "__main__":
@@ -16,3 +75,18 @@ if __name__ == "__main__":
     model = encoder.VAE_Encoder().to(device)
     outputs = model(inputs, noise)
     print(outputs.shape)
+    print("=" * 100)
+
+    inputs = torch.randn(64, 128, 512)
+    outputs = self_attention(inputs, 4)
+    print(outputs.shape)
+    print("=" * 100)
+
+    # (Batch_Size, H, Seq_Len, Dim / H) @ (Batch_Size, H, Dim / H, Seq_Len) -> (Batch_Size, H, Seq_Len, Seq_Len)
+    weight = torch.randn(4, 4)
+    # Mask where the upper triangle (above the principal diagonal) is 1
+    mask = torch.ones_like(weight, dtype=torch.bool).triu(1)
+    # Fill the upper triangle with -inf
+    weight.masked_fill_(mask, -torch.inf)
+    print(mask)
+    print(weight)
