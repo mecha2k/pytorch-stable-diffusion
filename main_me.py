@@ -77,7 +77,7 @@ if __name__ == "__main__":
     print(outputs.shape)
     print("=" * 100)
 
-    inputs = torch.randn(64, 128, 512)
+    inputs = torch.randn(64, 128, 512)  # (Batch_Size, Seq_Len, Dim)
     outputs = self_attention(inputs, 4)
     print(outputs.shape)
     print("=" * 100)
@@ -90,3 +90,9 @@ if __name__ == "__main__":
     weight.masked_fill_(mask, -torch.inf)
     print(mask)
     print(weight)
+
+    out_lin = nn.Linear(512, 512)
+    outputs = out_lin(inputs)
+    print(out_lin.weight.shape)
+    print(outputs.shape)
+    print("=" * 100)
