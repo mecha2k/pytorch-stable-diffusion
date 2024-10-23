@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
-from sd import encoder
+from sd import encoder, diffusion
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("mps" if torch.backends.mps.is_available() else device)
@@ -94,5 +94,11 @@ if __name__ == "__main__":
     out_lin = nn.Linear(512, 512)
     outputs = out_lin(inputs)
     print(out_lin.weight.shape)
+    print(outputs.shape)
+    print("=" * 100)
+
+    time = torch.ones(1, 320)
+    time_embedding = diffusion.TimeEmbedding(320)
+    outputs = time_embedding(time)
     print(outputs.shape)
     print("=" * 100)

@@ -18,12 +18,14 @@ def generate(
     cfg_scale=7.5,
     sampler_name="ddpm",
     n_inference_steps=50,
-    models={},
+    models=None,
     seed=None,
     device=None,
     idle_device=None,
     tokenizer=None,
 ):
+    if models is None:
+        models = {}
     with torch.no_grad():
         if not 0 < strength <= 1:
             raise ValueError("strength must be between 0 and 1")
@@ -100,9 +102,7 @@ def generate(
             input_image_tensor = input_image_tensor.permute(0, 3, 1, 2)
 
             # (Batch_Size, 4, Latents_Height, Latents_Width)
-            encoder_noise = torch.randn(
-                latents_shape, generator=generator, device=device
-            )
+            encoder_noise = torch.randn(latents_shape, generator=generator, device=device)
             # (Batch_Size, 4, Latents_Height, Latents_Width)
             latents = encoder(input_image_tensor, encoder_noise)
 
