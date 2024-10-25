@@ -1,7 +1,10 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+
+from tensorflow.python.ops.numpy_ops.np_array_ops import cumsum
 
 from sd import encoder, diffusion
 
@@ -102,3 +105,21 @@ if __name__ == "__main__":
     outputs = time_embedding(time)
     print(outputs.shape)
     print("=" * 100)
+
+    beta_start = 0.00085
+    beta_end = 0.0120
+    num_training_steps = 1000
+
+    betas = (
+        torch.linspace(beta_start**0.5, beta_end**0.5, num_training_steps, dtype=torch.float32) ** 2
+    )
+    alphas = 1.0 - betas
+    alphas_cumprod = torch.cumprod(alphas, dim=0)
+    one = torch.tensor(1.0)
+
+    betas = np.arange(1, 5, step=1)
+    print(betas)
+    betas = torch.from_numpy(betas)
+    cumsum = torch.cumsum(betas, dim=0)
+    cumprod = torch.cumprod(betas, dim=0)
+    print(cumsum, cumprod)

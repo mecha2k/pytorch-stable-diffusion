@@ -56,12 +56,6 @@ class VAE_Encoder(nn.Sequential):
         # x: (Batch_Size, Channel, Height, Width)
         # noise: (Batch_Size, 4, Height / 8, Width / 8)
 
-        aa = []
-        for module in self:
-            if getattr(module, "stride", None) == (2, 2):
-                aa.append(module)
-                print(module)
-
         for module in self:
 
             if getattr(module, "stride", None) == (2, 2):
