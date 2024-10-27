@@ -21,7 +21,7 @@ models = model_loader.preload_models_from_standard_weights(model_file, device)
 
 
 ## TEXT TO IMAGE
-prompt = "A dog with sunglasses, full body, comfy hat, looking at camera, highly detailed, ultra sharp, cinematic, 100mm lens, 8k resolution."
+prompt = "A dog with blue sunglasses, full body, yellow hat, wearing comfy hat, looking at camera, highly detailed, ultra sharp, cinematic, 100mm lens, 8k resolution."
 # prompt = "A cat stretching on the floor, highly detailed, ultra sharp, cinematic, 100mm lens, 8k resolution."
 uncond_prompt = ""  # Also known as negative prompt
 do_cfg = True
